@@ -3,6 +3,7 @@
     import useSnakeData, { ISnakeDataProps, ISnakeDataReturn } from '../hooks/useSnakeData';
     import useDrawSnake, { IDrawSnakeReturn } from '../hooks/useDrawSnake';
     import useSnakeMovement, { Direction, ISnakeMovementReturn } from '../hooks/useSnakeMovement';
+    import { useScoreStore } from '../store/ScoreStore';
 
     interface IProps {
         playerName: string;
@@ -16,6 +17,7 @@
     let snakeInterval
     let keyName
     const snakeGameCanvas = ref<HTMLCanvasElement | null>(null);
+    const scoreStore = useScoreStore();
 
     function init() {
         if (!snakeGameCanvas.value) {
@@ -43,24 +45,6 @@
         snakeMovement = useSnakeMovement({ prevBoard: snakeData.prevBoard, board: snakeData.board, snake: snakeData.snake, tail: snakeData.tail, head: snakeData.head });
     }
 
-    async function sendScore(score: number) {
-        const response = await fetch('http://localhost:3000/api/score', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ score, playerName: props.playerName })
-        });
-        console.log(response);
-        const data = await response.json();
-        console.log(data);
-
-        const scoreEl = document.querySelector('#score');
-        const highScoreEl = document.querySelector('#highScore');
-        if (scoreEl) scoreEl.textContent = (data.score).toString();
-        if (highScoreEl) highScoreEl.textContent = (data.highScore).toString();
-    }
-
     async function gameLoop() {
         snakeData.prevBoard.value = snakeData.board.value.map((row) => row.slice());
         snakeData.clearBoard();
@@ -75,16 +59,12 @@
 
 
         }
-        await sendScore(snakeData.snake.value.length - snakeData.snakeSize.value);
-        if (snakeData.snake.value.length >= snakeData.board.value.length * snakeData.board.value[0].length) {
-            clearInterval(snakeInterval);
-            alert('You win');
-            window.location.reload();
-        }
+        await scoreStore.updateScore(snakeData.snake.value.length - snakeData.snakeSize.value, props.playerName);
 
-        if (snakeMovement.isLose.value) {
+        if (snakeData.snake.value.length >= snakeData.board.value.length * snakeData.board.value[0].length || snakeMovement.isLose.value) {
             clearInterval(snakeInterval);
-            alert('You lose');
+            await scoreStore.updateScore(0, props.playerName);
+            alert('Game Over');
             window.location.reload();
         }
     }

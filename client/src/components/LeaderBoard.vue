@@ -25,7 +25,6 @@
     onUnmounted(() => {
         clearInterval(interval);
     });
-
 </script>
 
 <template>
@@ -47,12 +46,20 @@
         margin: 0;
         background-color: rgb(109, 109, 109);
         border-radius: 5px;
+        height: 210px;
+        overflow: auto;
     }
 
     .item {
         display: flex;
         justify-content: space-between;
         padding: 10px;
+        height: 20px;
+        border-bottom: 2px solid white;
+    }
+
+    .item:last-child {
+        border-bottom: none;
     }
 
     .gold {
